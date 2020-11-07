@@ -18,17 +18,35 @@ const badRequest = (message = "Bad request", status = 400) => {
 }
 
 app.set("view engine", "handlebars")
-app.engine("handlebars", handlebars({ layoutsDir: folder.layouts }))
+app.engine(
+  "handlebars",
+  handlebars({
+    layoutsDir: folder.layouts,
+    extname: "hbs",
+    defaultLayout: "index",
+    partialsDir: folder.partials // Funziona anche senza
+  })
+)
 
 app.use(require("body-parser").json())
 app.use(express.static(folder.public))
 
 
 app.get("/", (req, res) => {
-  res.render("main", { layout : "index" })
+  res.render("main", { about: true, projects: true, contact: true })
 })
+
+;[
+  { path: "About", filler: { about: true } },
+  { path: "Projects", filler: { projects: true } },
+  { path: "Contact", filler: { contact: true } }
+].forEach(({ path, filler }) => {
+  app.get(`/${path}`, (_, res) => res.render("main", filler))
+})
+
+
 app.all("*", (_, res) => {
-  res.sendFile(`${folder.public}/index.html`)
+  res.send("<div style='margin: auto; text-align: center'><h1>404</h1> <br/> <h3>RESOURCE NOT FOUND</h3></div>")
 })
 
 app.listen(port, () => {
