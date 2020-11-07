@@ -1,0 +1,15 @@
+- API docu: 
+  https://picsum.photos/
+
+- Get img & authorlist :   
+  https://picsum.photos/v2/list?page=2&limit=100
+  
+- Get sized img: 
+  https://picsum.photos/200                  (squared)
+  https://picsum.photos/200/300              (width/height)
+  
+- Get greysaled img:
+  https://picsum.photos/{size}?greyscale
+  
+- Get blurred img:
+  https://picsum.photos/{size}?blur={num}    (1 < num < 10)
