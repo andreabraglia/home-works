@@ -1,7 +1,7 @@
 - API docu:
   https://picsum.photos/
 
-- Get img & authorlist :
+- Get img & author list :
   https://picsum.photos/v2/list?page=2&limit=100
 
 - Get sized img:

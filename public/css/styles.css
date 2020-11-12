@@ -66,6 +66,13 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
+form input.error {
+  border-color: var(--danger);
+}
+
+form input.success {
+  border-color: var(--success);
+}
 
 article, aside, figcaption, figure, footer, header, hgroup, main, nav, section {
   display: block;
