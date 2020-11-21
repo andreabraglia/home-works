@@ -66,6 +66,13 @@ body {
   scrollbar-width: none;  /* Firefox */
 }
 
+.vertical-center {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+
 form input.error {
   border-color: var(--danger);
 }

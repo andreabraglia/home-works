@@ -55,6 +55,66 @@ app.use(express.static(folder.public))
       }
     }
   },
+  {
+    path: "Query", callback: async ({ query = { help: false, option: "", value: "", offset: 0  }, headers, connection, socket }, res) => {
+      const ip = headers["x-forwarded-for"] || connection.remoteAddress || socket.remoteAddress || (req.connection.socket ? req.connection.socket.remoteAddress : null)
+
+      let { help, option, value, offset, ...others } = query
+      console.log(help, option, value, offset, others)
+
+      others = Object.keys(others)
+      if (help) {
+        return res.render("documentation")
+      } else if (others.length) {
+        return res.render("documentation", { error: true, options: others })
+      }
+
+      const link = `https://pokeapi.co/api/v2/pokemon${option === "pokemon" ? "/" + value : `?limit=10&offset=${offset}` }`
+
+      if (option === "pokemon") {
+        let apiRes
+
+        try {
+          apiRes = await fetch(link)
+          apiRes = await apiRes.json()
+          apiRes = await fetch(apiRes.forms[0].url)
+          apiRes = await apiRes.json()
+        } catch (err) {
+          console.error(err)
+          console.dir(apiRes)
+          return res.render("error")
+        }
+
+        console.log("DATA FOUND:", apiRes)
+
+        const data = { name: apiRes.name, ...apiRes.pokemon }
+        data.images = Object.keys(apiRes.sprites).reduce((acc, image,  index) => {
+          acc.push({ image: apiRes.sprites[image], description: image, index: !!(index % 2) })
+          return acc
+        }, [])
+
+        console.log("POKEMON INFO:", data)
+
+        res.render("pokemon", { ...data })
+      } else if (option === "listing") {
+        let apiRes
+        try {
+          apiRes = await fetch(link)
+          apiRes = await apiRes.json()
+          console.log(apiRes)
+          apiRes = apiRes.results
+          return res.send({  yourIP: ip, apiRes})
+        } catch (err) {
+          console.error(err)
+          console.dir(apiRes)
+          return res.render("error")
+        }
+
+      } else {
+        return res.render("documentation", { error: true, options: others })
+      }
+    }
+  },
   { path: "Contact", filler: { contact: true } },
   {
     path: "Subscribe", method: "post", callback: ({ body }, res) => {
