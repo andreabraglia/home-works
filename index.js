@@ -40,7 +40,6 @@ app.use(express.static(folder.public))
   {
     path: "Projects", filler: { projects: true }, callback: async (req, res) => {
       const page = req.query.page || 1
-      console.log(page)
       try {
         let imgs = await fetch(`https://picsum.photos/v2/list?page=${page}&limit=4`)
         imgs = await imgs.json()
@@ -60,7 +59,6 @@ app.use(express.static(folder.public))
       const ip = headers["x-forwarded-for"] || connection.remoteAddress || socket.remoteAddress || (req.connection.socket ? req.connection.socket.remoteAddress : null)
 
       let { help, option, value, offset, ...others } = query
-      console.log(help, option, value, offset, others)
 
       others = Object.keys(others)
       if (help) {
@@ -85,7 +83,6 @@ app.use(express.static(folder.public))
           return res.render("error")
         }
 
-        console.log("DATA FOUND:", apiRes)
 
         const data = { name: apiRes.name, ...apiRes.pokemon }
         data.images = Object.keys(apiRes.sprites).reduce((acc, image,  index) => {
