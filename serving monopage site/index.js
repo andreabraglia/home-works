@@ -27,14 +27,14 @@ app.post("/remove", ({ body: { nome } }, res) => {
   let result
   nome = nome.toUpperCase()
   const index = nomi.indexOf(nome)
-  if (index >= 0){
+  if (index >= 0) {
     nomi.splice(index, 1)
     result = nomi[Math.floor(Math.random() * nomi.length)]
     nomi.push(nome)
   } else {
     result = nomi[Math.floor(Math.random() * nomi.length)]
   }
-  if (result){
+  if (result) {
     nomi.splice(nomi.indexOf(result), 1)
     coppie.push([result, nome])
     res.send({ result })
