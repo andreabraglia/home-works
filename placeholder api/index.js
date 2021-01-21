@@ -6,19 +6,19 @@ const publicDir = `${__dirname}/public`
 const { badRequest, getComments, getPosts, templateHtml } = require("./utils")
 
 let posts
-(async function  () {
+(async function() {
   posts = await getPosts()
 }())
 
 app.use(require("body-parser").json())
 app.use(express.static(publicDir))
 
-app.get("/post/:id", async ({ params: { id = null }}, res) => {
+app.get("/post/:id", async({ params: { id = null } }, res) => {
   if (!id || isNaN(+id)) {
-    badRequest("The ID you choose is not a number",400 )
+    badRequest("The ID you choose is not a number", 400)
   } else {
     const post = { comments: await getComments(id), ...posts[id] }
-    res.send(templateHtml({post}))
+    res.send(templateHtml({ post }))
   }
 })
 
@@ -26,7 +26,7 @@ app.get("/", (_, res) => {
   if (Object.keys(posts)) {
     res.send(templateHtml(posts))
   } else {
-    badRequest("JSON-placeholder API doesn't responds, try later", 500 )
+    badRequest("JSON-placeholder API doesn't responds, try later", 500)
   }
 })
 
@@ -34,7 +34,7 @@ app.all("*", (_, res) => {
   if (Object.keys(posts)) {
     res.send(templateHtml(posts))
   } else {
-    badRequest("JSON-placeholder API doesn't responds, try later", 500 )
+    badRequest("JSON-placeholder API doesn't responds, try later", 500)
   }
 })
 

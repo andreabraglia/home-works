@@ -13,13 +13,6 @@ const { nomi, build } = require("./assets")
 
 const coppie = [["example 1", "person 1"], ["example 2", "person 2"]]
 
-const badRequest = (message = "Bad request", status = 400) => (
-  {
-    status,
-    message
-  }
-)
-
 app.use(require("body-parser").json())
 app.use(express.static(publicDir))
 
@@ -47,7 +40,7 @@ app.get("/getData", (_, res) => {
   res.send({ nomi })
 })
 
-app.get("/getNames", (req, res) => {
+app.get("/getNames", (_, res) => {
   res.send(
     build(template, { Title: "Nomi", list: nomi })
   )
