@@ -19,13 +19,18 @@ db.serialize(() => {
   db.run(`
   CREATE TABLE IF NOT EXISTS Users (
     username TEXT NOT NULL,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    UNIQUE(username, password)
   )`)
-
 })
 
-
-db.run(fillDB())
+db.all("SELECT * FROM Users", (err: Error, data: RowsType): void => {
+  if (!data.length) {
+    db.run(fillDB())
+  } else {
+    return
+  }
+})
 
 app.use(express.json())
 app.use(express.static(join(__dirname, "public")))
