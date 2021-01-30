@@ -144,3 +144,5 @@ dist
 ### vscode ###
 
 # End of https://www.toptal.com/developers/gitignore/api/node,visualstudiocode,vscode,git
+
+db.db3
