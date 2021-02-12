@@ -13,7 +13,7 @@ import type { LoginRequest, RowsType, RefreshTokenRequest } from "./types"
 const app = express()
 const PORT: number | string = process.argv.slice(2)[0] === "--port" ? process.argv.slice(2)[1] : 8080
 
-const db  = new sqlite3.Database("./db.db3")
+const db = new sqlite3.Database("./db.db3")
 
 db.serialize(() => {
   db.run(`
@@ -72,9 +72,7 @@ app.get("/", (req: express.Request, res: express.Response) => {
   res.sendFile(join(__dirname, "index.html"))
 })
 
-app.get("*", (req: express.Request, res: express.Response) =>
-  res.sendFile(join(__dirname, "index.html"))
-)
+app.get("*", (req: express.Request, res: express.Response) => res.sendFile(join(__dirname, "index.html")))
 
 app.listen(PORT, (): void => {
   // eslint-disable-next-line no-console
