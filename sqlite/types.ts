@@ -17,3 +17,13 @@ export interface RefreshTokenRequest extends Request {
     jwt: string
   }
 }
+export type LogsRows = {
+  ip: string
+  timestamp: string
+}
+
+export type CountObject = {
+  ip: string
+  dates: string[]
+  count: number
+}

@@ -1,16 +1,10 @@
 module.exports = {
   extends: [
+    "@soluzioni-futura/eslint-config-soluzioni-futura",
     "eslint:recommended",
-    "plugin:react/recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "@soluzioni-futura/eslint-config-soluzioni-futura"
   ],
-  settings: {
-    react: {
-      version: "detect"
-    }
-  },
   env: {
     es6: true,
     node: true

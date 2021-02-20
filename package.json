@@ -13,7 +13,9 @@
   },
   "homepage": "https://github.com/andreabraglia/home-works#readme",
   "dependencies": {
-    "@soluzioni-futura/eslint-config-soluzioni-futura": "^1.4.0",
     "eslint": "^7.18.0"
+  },
+  "devDependencies": {
+    "@soluzioni-futura/eslint-config-soluzioni-futura": "^1.4.0"
   }
 }
