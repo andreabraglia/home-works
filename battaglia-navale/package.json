@@ -1,0 +1,23 @@
+{
+  "name": "battaglia-navale",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-rate-limit": "^5.2.6",
+    "faker": "^5.4.0",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "@soluzioni-futura/eslint-config-soluzioni-futura": "^1.4.0",
+    "eslint": "^7.21.0",
+    "simple-argv": "^2.0.4"
+  }
+}
