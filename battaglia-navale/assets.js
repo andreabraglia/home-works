@@ -70,6 +70,5 @@ module.exports = {
     }
 
   },
-  PORT: argv.port || 8080,
-  ipBlackList: []
+  PORT: argv.port || 8080
 }

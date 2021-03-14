@@ -2,12 +2,29 @@
 const express = require("express")
 const app = new express()
 
-const { W, H, S, field, ships, teams, PORT, seeder, ipBlackList } = require("./assets")
-
-seeder()
-console.log(field)
+const { W, H, S, field, ships, teams, PORT, seeder } = require("./assets")
+;(() => seeder())()
 
 app.use(express.json())
+app.use("/fire", ({ query: { team, password } }, res, next) => {
+
+  if (!team || !password || typeof team !== "string" || typeof password !== "string") {
+    return res.status(400).send({ msg: "Controlla le credenziali" })
+  } else if (!teams[team]) {
+    return res.status(400).send({ msg: "Prima di attaccare devi accreditarti" })
+  } else if (teams[team].password !== password) {
+    return res.status(403).send({ msg: "Hai sbagliato la password" })
+  }
+
+  if ((teams[team].time - Date.now()) <= 1000) {
+    res.status(400).send({ msg: "Troppi tentativi (massimo una chiamata al secondo)" })
+  } else {
+    teams[team].lastFiredBullet = Date.now()
+    teams[team].firedBullets += 1
+    next()
+  }
+})
+
 
 app.get("/", ({ query: { format } }, res) => {
   const visibleField = field.map(row => row.map(cell => ({
@@ -33,55 +50,66 @@ app.get("/", ({ query: { format } }, res) => {
       ships: visibleShipInfo
     })
   } else {
-    // html format field
-
     const formattedField =
       visibleField.map(row =>
         `<tr> 
-          ${
-  row.map(cell =>
-    `<td>${cell.ship ? cell.ship.name : ""}</td>`)
-    .join("")
-}
+          ${row.map(cell => `<td class="${cell.ship ? cell.ship.name : "acqua"}"></td>`).join("")}
           </tr>`
-      )
-        .join("")
+      ).join("")
 
-    res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>battaglia navale</title>
-      <style>
-        table, td, th {
-          border: 1px solid black;
-        }
+    res.send(
+      `<!DOCTYPE html>
+              <html lang="it">
+                <head>
+                  <title>battaglia navale</title>
+                  <style>
+                    body {
+                      width: 100%;
+                      height: 100%;
+                      margin: 0;
+                      padding: 0;
+                      align-content: center;
+                    }
+                    
+                    table, td, th {
+                      border: 1px solid white;
+                    }
+                    
+                    td {
+                       width: 40px;
+                       height: 40px;
+                    }
+                    
+                    td.acqua {
+                      background-image:url('https://i.gifer.com/GPyH.gif');
+                      background-size: contain;
+                    }
 
-        td {
-          width: 40px;
-          height: 40px;
-        }
-        
-        table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-      </style>
-    </head>
-    <body>
-      <table>
-        <tbody>
-          ${formattedField}
-        </tbody>
-      </table>
-    </body>
-    </html>
-    `)
+                    table {
+                      width: 80%;
+                      margin: 3% auto;
+                      border-collapse: collapse;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <table>
+                    <tbody>
+                      ${formattedField}
+                    </tbody>
+                  </table>
+                </body>
+              </html>`
+    )
   }
 })
 
-app.get("/score", (req, res) => {
-  res.json([])
+app.get("/score", ({ query: { team = "" } }, res) => {
+  if (team) {
+    res.send(teams[team])
+  } else {
+    res.send(teams)
+  }
 })
 
 app.post("/signup", ({ body: { name, password } }, res) => {
@@ -98,59 +126,45 @@ app.post("/signup", ({ body: { name, password } }, res) => {
   }
 })
 
-app.use("/fire", ({ ip, query: { team, password } }, res, next) => {
-  const ips = Object.keys(ipBlackList)
-  if (ips.includes(ip)) {
-    if (ipBlackList[ip].time - Date.now() <= 1000) {
-      res.status(400).send({ msg: "Troppi tentativi, sei stato blacklistato" })
-    } else {
-      if (teams?.team?.password === password) {
-        next()
-      } else {
-        res.status(401).send({ msg: "Prima di attaccare devi accreditarti" })
-      }
-    }
-  } else {
-    ipBlackList[ip] = { time: Date.now() }
-  }
-})
-
-// const ship = {
-//   id,
-//   name: faker.name.firstName(),
-//   x: faker.random.number({ min: 0, max: vertical ? W - 1 : W - maxHp }),
-//   y: faker.random.number({ min: 0, max: vertical ? H - maxHp : H - 1 }),
-//   vertical,
-//   maxHp,
-//   curHp: 4,
-//   alive: true,
-//   killer: null
-// }
-
 app.get("/fire", ({ query: { x, y, team } }, res) => {
-  /*
-    TODO:
-      1. segnare la cella come colpita
-      2. segnare eventualmente la nave come colpita (ridurre gli hp e verificare se e' morta)
-      3. assegnare il team sia alla cella che alla nave (eventuale)
-      5. definire un punteggio conseguente all'attacco:
-        c. punteggio positivo se spari su nave ma non la uccidi
-        d. punteggio molto positivo se spari su nave e la uccidi
-  */
+  const teamData = teams[team]
+
   if (x > W || y > H || x < 0 || y < 0) {
-    res.status(400).send({ msg: "Sei un mona, sei andato fuori campo" })
-    // TODO: gestire lo score molto negativo x fuori campo
+    teamData.score -= 20
+    return res.status(400).send({ score: teamData.score, msg: "Sei un mona, sei andato fuori campo" })
   }
 
-  if (field[x][y].ship) {
-    // TODO: gestire il copito
+  const cell = field[x][y]
 
-  } else if (field[x][y].hit) {
-    res.status(400).send({ score: 0, info: { x, y, team }, msg: "casella già colpita" })
-    // TODO: gestire lo score molto negativo x casella già colpita
+  if (cell.ship && !cell.hit) {
+    cell.hit = true
+    const firedShip = cell.ship
+    if (firedShip.curHp === (firedShip.maxHp - 1)) {
+      // Update ship data
+      firedShip.alive = false
+      firedShip.curHp = 0
+      firedShip.killer = team
+      // Update team data
+      teamData.killedShips.push(firedShip)
+      teamData.score += 15
 
+      return res.status(200).send({ score: teamData.score, info: { x, y, team }, msg: "barca affondata" })
+    } else {
+      firedShip.killer = team
+      firedShip.curHp -= 1
+      // Update team data
+      teamData.killedShips.push(firedShip)
+      teamData.score += 10
+
+      return res.status(200).send({ score: teamData.score, info: { x, y, team }, msg: "barca colpita" })
+    }
+
+  } else if (cell.hit) {
+    teamData.score -= 8
+    res.status(400).send({ score: teamData.score, info: { x, y, team }, msg: "casella già colpita" })
   } else {
-    res.status(200).send({ score: 0, info: { x, y, team }, msg: "acqua" })
+    cell.hit = true
+    res.status(200).send({ score: teamData.score, info: { x, y, team }, msg: "acqua" })
   }
 })
 
