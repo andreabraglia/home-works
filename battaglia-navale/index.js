@@ -6,14 +6,15 @@ const { W, H, field, ships, teams, PORT, seeder } = require("./assets")
 
 ;(() => seeder())()
 
-teams.a = {
-  team: "a",
-  password: "a",
-  score: 0,
-  killedShips: [],
-  firedBullets: 0,
-  lastFiredBullet: new Date().getTime()
-}
+// FOR TESTING PURPOSES
+// teams.a = {
+//   team: "a",
+//   password: "a",
+//   score: 0,
+//   killedShips: [],
+//   firedBullets: 0,
+//   lastFiredBullet: new Date().getTime()
+// }
 
 app.use(express.json())
 app.use("/fire", ({ query: { team, password, x, y } }, res, next) => {
@@ -39,7 +40,6 @@ app.use("/fire", ({ query: { team, password, x, y } }, res, next) => {
     next()
   }
 })
-
 
 app.get("/", ({ query: { format } }, res) => {
   const visibleField = field.map(row => row.map(cell => ({
@@ -68,7 +68,7 @@ app.get("/", ({ query: { format } }, res) => {
     const formattedField =
       visibleField.map(row =>
         `<tr> 
-          ${row.map(cell => `<td class="${cell.ship ? cell.ship.name : "acqua"}"></td>`).join("")}
+          ${row.map(cell => `<td class="${cell.ship ? "colpita" : "acqua"}">${cell.hit ? "X" : ""}</td>`).join("")}
           </tr>`
       ).join("")
 
@@ -93,6 +93,12 @@ app.get("/", ({ query: { format } }, res) => {
                     td {
                        width: 40px;
                        height: 40px;
+                       text-align: center;
+                    }
+                    
+                    td.colpita {
+                      background-image: url("https://downloadwap.com/thumbs3/screensavers/d/3/abstract/explosion463802twilightwap.com.gif");
+                      background-size: contain;
                     }
                     
                     td.acqua {
