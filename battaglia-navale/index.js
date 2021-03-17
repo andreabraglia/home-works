@@ -2,12 +2,21 @@
 const express = require("express")
 const app = new express()
 
-const { W, H, S, field, ships, teams, PORT, seeder } = require("./assets")
+const { W, H, field, ships, teams, PORT, seeder } = require("./assets")
+
 ;(() => seeder())()
 
-app.use(express.json())
-app.use("/fire", ({ query: { team, password } }, res, next) => {
+teams.a = {
+  team: "a",
+  password: "a",
+  score: 0,
+  killedShips: [],
+  firedBullets: 0,
+  lastFiredBullet: new Date().getTime()
+}
 
+app.use(express.json())
+app.use("/fire", ({ query: { team, password, x, y } }, res, next) => {
   if (!team || !password || typeof team !== "string" || typeof password !== "string") {
     return res.status(400).send({ msg: "Controlla le credenziali" })
   } else if (!teams[team]) {
@@ -16,10 +25,16 @@ app.use("/fire", ({ query: { team, password } }, res, next) => {
     return res.status(403).send({ msg: "Hai sbagliato la password" })
   }
 
-  if ((teams[team].time - Date.now()) <= 1000) {
+  if ((-teams[team].lastFiredBullet + new Date().getTime()) <= 1000) {
+    teams[team].score -= 1
     res.status(400).send({ msg: "Troppi tentativi (massimo una chiamata al secondo)" })
   } else {
-    teams[team].lastFiredBullet = Date.now()
+
+    if (!x || !y) {
+      return res.status(400).send({ msg: "controlla le credenziali" })
+    }
+
+    teams[team].lastFiredBullet = new Date().getTime()
     teams[team].firedBullets += 1
     next()
   }
@@ -104,68 +119,85 @@ app.get("/", ({ query: { format } }, res) => {
   }
 })
 
-app.get("/score", ({ query: { team = "" } }, res) => {
-  if (team) {
+app.get("/score", ({ query: { team, password } }, res) => {
+  if (teams[team]?.password === password) {
     res.send(teams[team])
   } else {
     res.send(teams)
   }
 })
 
-app.post("/signup", ({ body: { name, password } }, res) => {
-  if (typeof name !== "string" || typeof password !== "string" || !name || !password) {
-    res.status(400).send({ msg: "Ricontrolla le credenziali" })
+app.post("/signup", ({ body: { team, password } }, res) => {
+  if (typeof team !== "string" || typeof password !== "string" || !team || !password) {
+    return res.status(400).send({ msg: "Ricontrolla le credenziali" })
   }
-  if (teams[name]) {
-    res.status(400).send({ msg: `Ti sei già accreditato con il nome ${name}` })
+
+  if (teams[team]) {
+    res.status(400).send({ msg: `Ti sei già accreditato con il nome ${team}` })
   } else {
-    teams[name] = {
-      name, password, score: 0, killedShips: [], firedBullets: 0, lastFiredBullet: null
+    teams[team] = {
+      team, password, score: 0, killedShips: [], firedBullets: 0, lastFiredBullet: new Date().getTime()
     }
-    res.status(200).send({ msg: "Accreditamento riuscito!", credentials: { name, password } })
+    res.status(200).send({ msg: "Accreditamento riuscito!", credentials: { team, password } })
   }
 })
 
+
+/*
+* Cella già colpita     => -2
+* Cella fuori dal campo => -20
+* Nave colpita          => 1
+* Nave affondata        => 3
+*/
 app.get("/fire", ({ query: { x, y, team } }, res) => {
   const teamData = teams[team]
+
 
   if (x > W || y > H || x < 0 || y < 0) {
     teamData.score -= 20
     return res.status(400).send({ score: teamData.score, msg: "Sei un mona, sei andato fuori campo" })
   }
 
-  const cell = field[x][y]
+  const cell = field[y][x]
 
   if (cell.ship && !cell.hit) {
     cell.hit = true
     const firedShip = cell.ship
-    if (firedShip.curHp === (firedShip.maxHp - 1)) {
+    if (firedShip.curHp === 1) {
+      // NAVE AFFONDATA
+
       // Update ship data
       firedShip.alive = false
       firedShip.curHp = 0
       firedShip.killer = team
       // Update team data
       teamData.killedShips.push(firedShip)
-      teamData.score += 15
+      teamData.score += 3
 
       return res.status(200).send({ score: teamData.score, info: { x, y, team }, msg: "barca affondata" })
     } else {
+      // NAVE COLPITA
       firedShip.killer = team
       firedShip.curHp -= 1
       // Update team data
       teamData.killedShips.push(firedShip)
-      teamData.score += 10
+      teamData.score += 1
 
       return res.status(200).send({ score: teamData.score, info: { x, y, team }, msg: "barca colpita" })
     }
 
   } else if (cell.hit) {
-    teamData.score -= 8
+    // CELLA GIA' COLPITA
+    teamData.score -= 2
     res.status(400).send({ score: teamData.score, info: { x, y, team }, msg: "casella già colpita" })
   } else {
     cell.hit = true
     res.status(200).send({ score: teamData.score, info: { x, y, team }, msg: "acqua" })
   }
+})
+
+app.get("/admin", (req, res) => {
+  res.send({ field, ships, teams })
 })
 
 app.all("*", (req, res) => {
