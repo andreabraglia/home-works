@@ -6,35 +6,23 @@ const { W, H, field, ships, teams, PORT, seeder } = require("./assets")
 
 ;(() => seeder())()
 
-// FOR TESTING PURPOSES
-// teams.a = {
-//   team: "a",
-//   password: "a",
-//   score: 0,
-//   killedShips: [],
-//   firedBullets: 0,
-//   lastFiredBullet: new Date().getTime()
-// }
-
 app.use(express.json())
 app.use("/fire", ({ query: { team, password, x, y } }, res, next) => {
+
   if (!team || !password || typeof team !== "string" || typeof password !== "string") {
     return res.status(400).send({ msg: "Controlla le credenziali" })
+  } else if (!x || !y) {
+    return res.status(400).send({ msg: "Controlla le coordinate" })
   } else if (!teams[team]) {
     return res.status(400).send({ msg: "Prima di attaccare devi accreditarti" })
   } else if (teams[team].password !== password) {
     return res.status(403).send({ msg: "Hai sbagliato la password" })
   }
 
-  if ((-teams[team].lastFiredBullet + new Date().getTime()) <= 1000) {
+  if ((new Date().getTime() - teams[team].lastFiredBullet) <= 1000) {
     teams[team].score -= 1
     res.status(400).send({ msg: "Troppi tentativi (massimo una chiamata al secondo)" })
   } else {
-
-    if (!x || !y) {
-      return res.status(400).send({ msg: "controlla le credenziali" })
-    }
-
     teams[team].lastFiredBullet = new Date().getTime()
     teams[team].firedBullets += 1
     next()
@@ -126,10 +114,14 @@ app.get("/", ({ query: { format } }, res) => {
 })
 
 app.get("/score", ({ query: { team, password } }, res) => {
+  const leaderboard = Object.values(teams)
+    .sort(({ score: a }, { score: b }) => a > b ? -1 : 1)
+    .map(({ team, score, killedShips }, i) => ({ team, score, killedShips, position: i }))
+
   if (teams[team]?.password === password) {
-    res.send(teams[team])
+    res.send({ team: teams[team], leaderboard })
   } else {
-    res.send(teams)
+    res.send({ teams, leaderboard })
   }
 })
 
