@@ -1,17 +1,21 @@
 /* eslint-disable no-console */
 const argv = require("simple-argv")
-
 const fetch = require("node-fetch")
 
-const team = argv.t || argv.team || argv.TEAM || "zebbi"
-const password =  argv.p || argv.password || argv.PASSWORD || "zebbi"
+const getRandomCred = () => "xxxxxxxxxxxx4xx-- Zebbi & Co. --xx5xxxxxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+  const r = Math.random() * 16 | 0, v = c === "x" ? r : (r & 0x3 | 0x8)
+  return v.toString(16)
+})
+
+const team = argv.t || argv.team || argv.TEAM || getRandomCred()
+const password =  argv.p || argv.password || argv.PASSWORD || getRandomCred()
 
 const mine = (argv.game !== "gio")
 const port = argv.port || argv.p || 8080
-const domain = argv.domain || argv.d || "http://localhost"
+const domain = argv.domain || argv.d || "http://93.42.249.207"
 const link = [domain, port].join(":")
 
-let time = 1050
+let time = argv.time === 0 ? 0 : argv.time ? argv.time : 1050
 
 const login = async() => {
   try {
@@ -29,7 +33,7 @@ const login = async() => {
     } else {
       res = await fetch(`${link}/signup?name=${team}&password=${password}`)
 
-      res = res.status === 200 ? { msg: "Accreditamento riuscito" } : res.status === 409 ? console.log("Già accreditato") : (() => {
+      res = res.status === 200 ? { msg: "Accreditamento riuscito" } : res.status === 409 ? { msg: "Già accreditato" } : (() => {
         console.log("Accreditamento fallito"); process.exit(1)
       })()
     }
@@ -51,7 +55,7 @@ const hit = async({ x, y }) => {
       res.msg = res.message
     }
 
-    if (res.msg === "Troppi tentativi (massimo una chiamata al secondo)" || res.status === 408) {
+    if (res.msg === "Troppi tentativi (massimo una chiamata al secondo)" || res.status === 408 || res.status === 429) {
       time += 5
     }
 
@@ -65,7 +69,7 @@ const hit = async({ x, y }) => {
 
 const getField = async() => {
   try {
-    let data = await fetch("http://localhost:8080/?format=json")
+    let data = await fetch(`${link}/?format=json`)
     data = await data.json()
 
     const tempField = data.field.map(row => row.filter(cell => !cell.hit))
@@ -88,7 +92,7 @@ const getField = async() => {
 }
 
 ;(async() => {
-  console.log("configs:", { link, team, password, mine, time })
+  console.log("Configs: %O", { link, team, password, mine, time })
   console.log()
   const res = await login()
   console.log()
