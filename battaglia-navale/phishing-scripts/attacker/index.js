@@ -2,7 +2,7 @@
 const argv = require("simple-argv")
 
 const fetch = require("node-fetch")
-console.log(argv)
+
 const team = argv.t || argv.team || argv.TEAM || "username"
 const password =  argv.p || argv.password || argv.PASSWORD || "password"
 
