@@ -10,7 +10,7 @@ const getRandomCred = () => "xxxxxxxxxxxx4xx-- Zebbi & Co. --xx5xxxxxxxxxxxxxxx"
 const team = argv.t || argv.team || argv.TEAM || getRandomCred()
 const password =  argv.p || argv.password || argv.PASSWORD || getRandomCred()
 
-const mine = (argv.game !== "gio")
+const mine = argv.game === "ab"
 
 const port = argv.port || argv.p || 8080
 const domain = argv.domain || argv.d || "http://93.42.249.207"
