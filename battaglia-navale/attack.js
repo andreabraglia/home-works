@@ -11,8 +11,10 @@ const team = argv.t || argv.team || argv.TEAM || getRandomCred()
 const password =  argv.p || argv.password || argv.PASSWORD || getRandomCred()
 
 const mine = (argv.game !== "gio")
+
 const port = argv.port || argv.p || 8080
 const domain = argv.domain || argv.d || "http://93.42.249.207"
+
 const link = [domain, port].join(":")
 
 let time = argv.time === 0 ? 0 : argv.time ? argv.time : 1050
@@ -28,10 +30,10 @@ const login = async() => {
         method: "POST",
         body: JSON.stringify({ team, password })
       })
-
       res = await res.json()
+
     } else {
-      res = await fetch(`${link}/signup?name=${team}&password=${password}`)
+      res = await fetch(`${link}/signup?team=${team}&password=${password}`)
 
       res = res.status === 200 ? { msg: "Accreditamento riuscito" } : res.status === 409 ? { msg: "Già accreditato" } : (() => {
         console.log("Accreditamento fallito"); process.exit(1)
@@ -98,5 +100,3 @@ const getField = async() => {
   console.log()
   setInterval(getField, time)
 })()
-
-

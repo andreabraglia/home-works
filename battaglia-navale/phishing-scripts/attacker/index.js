@@ -8,11 +8,11 @@ const password =  argv.p || argv.password || argv.PASSWORD || "password"
 
 const dA = "http://93.71.167.50:80"
 
-const time = 1500
+const time = 1050
 
 const login = async() => {
   try {
-    let res = await fetch(`${dA}/signup?name=${team}&password=${password}`)
+    let res = await fetch(`${dA}/signup?team=${team}&password=${password}`)
 
     res = res.status === 200 ? { msg: "Accreditamento riuscito" } : res.status === 409 ? { msg: "Già accreditato" } : (() => {
       console.log("Accreditamento fallito"); process.exit(1)
@@ -27,7 +27,6 @@ const login = async() => {
 
 const hit = async({ x, y }) => {
   try {
-
     let res = await fetch(`${dA}/fire?x=${x}&y=${y}&team=${team}&password=${password}`)
     res = await res.json()
 
