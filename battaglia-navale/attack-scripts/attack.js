@@ -94,7 +94,7 @@ const getField = async() => {
 ;(async() => {
   console.log("Configs: %O", { link, team, password, mine, time })
   console.log()
-  const res = await login()
+  await login()
   console.log()
   setInterval(getField, time)
 })()
