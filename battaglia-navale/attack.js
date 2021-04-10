@@ -17,7 +17,7 @@ const domain = argv.domain || argv.d || "http://93.42.249.207"
 
 const link = [domain, port].join(":")
 
-let time = argv.time === 0 ? 0 : argv.time ? argv.time : 1050
+let time = argv.time === 0 ? 0 : argv.time ? argv.time : 1055
 
 const login = async() => {
   try {
@@ -50,15 +50,19 @@ const login = async() => {
 
 const hit = async({ x, y }) => {
   try {
+
     let res = await fetch(`${link}/fire?x=${x}&y=${y}&team=${team}&password=${password}`)
-    res = await res.json()
 
-    if (!mine) {
-      res.msg = res.message
-    }
-
-    if (res.msg === "Troppi tentativi (massimo una chiamata al secondo)" || res.status === 408 || res.status === 429) {
+    if (res.status === 429) {
       time += 5
+      res.msg = res.statusText
+    } else if (res.status === 400) {
+      console.log("Il gioco è terminato")
+    } else {
+      res = await res.json()
+      if (!mine) {
+        res.msg = res.message
+      }
     }
 
     console.log(`msg: ${res.msg}    score: ${res.score} \ncell: ${x}; ${y}`)
