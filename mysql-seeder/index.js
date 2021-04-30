@@ -1,74 +1,5 @@
-let [path, name, ...argv] = process.argv
-
-argv = argv.reduce((acc, e, i) => {
-  if (e[0] === "-") {
-    e = e.replace(/-/g, "")
-    acc[e] = ""
-  } else {
-    acc[argv[i - 1].replace(/-/g, "").toLowerCase()] = e
-  }
-
-  return acc
-}, {})
-
-const { username, password, database } = argv
-
-
-const mysql = require("mysql2")
-
-if (!password) {
-  throw new Error("Non c'è la password")
-}
-
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: username || "root",
-  password,
-  database: database || "Test"
-})
-
-
-;`  CREATE TABLE IF NOT EXISTS Classi (
-        classe VARCHAR(255) PRIMARY KEY
-    );
-    CREATE TABLE IF NOT EXISTS Studenti (
-        classe  VARCHAR(255) REFERENCES Classi (classe),
-        cognome VARCHAR(255),
-        nome    VARCHAR(255) NOT NULL,
-        PRIMARY KEY (classe, cognome)
-    );
-    CREATE TABLE IF NOT EXISTS Materie (
-        sigla VARCHAR(255) PRIMARY KEY,
-        nome  VARCHAR(255) NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS Docenti (
-        cognome VARCHAR(255) NOT NULL,
-        nome    VARCHAR(255) NOT NULL,
-        id      INT PRIMARY KEY AUTO_INCREMENT
-    );
-    CREATE TABLE IF NOT EXISTS Insegnamenti (
-        idDocente    INT REFERENCES Docenti (id),
-        siglaMateria VARCHAR(255) REFERENCES Materie (sigla),
-        PRIMARY KEY (idDocente, siglaMateria)
-    );
-    CREATE TABLE IF NOT EXISTS Valutazioni (
-        classeStudente  VARCHAR(255),
-        cognomeStudente VARCHAR(255),
-        siglaMateria    VARCHAR(255) NOT NULL REFERENCES Materie (sigla),
-        data            DATE,
-        voto            INT          NOT NULL,
-        FOREIGN KEY (classeStudente, cognomeStudente) REFERENCES Studenti (classe, cognome)
-    );`.split(";").forEach(async(query) => {
-    if (query && query !== "") {
-      try {
-        await connection.promise().execute((query).trim() + ";")
-      } catch (err) {
-        console.log({ query, err })
-      }
-    }
-  })
-
 const faker = require("faker")
+const { createConnection, createTables, executeQuery, truncateTables } = require("./utils")
 
 const classes = []
 const names = []
@@ -77,17 +8,7 @@ const subjects = ["ENG", "ITA", "LAT", "FIL", "STO"]
 const insegnamenti = {}
 const surname_class = {}
 
-const executeQuery = async(query) => {
-  try {
-    query = query.trim().replace(/.$/, ";")
-    const res = await connection.promise().execute(query)
-    // console.log({ query, res })
-  } catch (err) {
-    console.log({ err, query })
-  }
-}
-
-const insertClasses = async(num) => {
+const insertClasses = (num) => {
   let query = "INSERT INTO Classi VALUES "
   let letter = "A"
   for (let i = 1; i <= num; i++) {
@@ -98,10 +19,11 @@ const insertClasses = async(num) => {
       letter = String.fromCharCode(letter.charCodeAt() + 1)
     }
   }
-  await executeQuery(query)
+  executeQuery(query)
+  console.log("Classi seeded!! \n")
 }
 
-const insertStudents = async(num) => {
+const insertStudents = (num) => {
   let i = 0
   while (i < num) {
     const name = faker.fake("\"{{name.firstName}}\", \"{{name.lastName}}\"")
@@ -122,10 +44,11 @@ const insertStudents = async(num) => {
   },
   "INSERT INTO Studenti VALUES")
 
-  await executeQuery(query)
+  executeQuery(query)
+  console.log("Studenti seeded!! \n")
 }
 
-const insertSubjects = async() => {
+const insertSubjects = () => {
   const query = `
     INSERT INTO Materie 
         VALUES
@@ -135,10 +58,11 @@ const insertSubjects = async() => {
             ("FIL", "Filosofia"),
             ("STO", "Storia");`
 
-  await executeQuery(query)
+  executeQuery(query)
+  console.log("Materie seeded!! \n")
 }
 
-const instertProfs = async(num) => {
+const insertProfs = (num) => {
   let i = 0
   while (i < num) {
     const name = faker.fake("\"{{name.firstName}}\", \"{{name.lastName}}\"")
@@ -148,14 +72,13 @@ const instertProfs = async(num) => {
     }
   }
 
-  const query = profs.reduce((acc, name) =>
-    acc += `(${name}, DEFAULT), `,
-  "INSERT INTO Docenti VALUES")
+  const query = profs.reduce((acc, name) => acc += `(${name}, DEFAULT), `, "INSERT INTO Docenti VALUES")
 
-  await executeQuery(query)
+  executeQuery(query)
+  console.log("Docenti seeded!! \n")
 }
 
-const instertInsegnamenti = async(num) => {
+const insertInsegnamenti = (num) => {
   let i = 0
   const maxID = profs.length || 7
   let query = "INSERT INTO Insegnamenti VALUES "
@@ -169,7 +92,10 @@ const instertInsegnamenti = async(num) => {
       i++
     }
   }
-  await executeQuery(query)
+
+  executeQuery(query)
+  console.log("Insegnamenti seeded!! \n")
+
 }
 
 const insertGrades = (num) => {
@@ -190,15 +116,23 @@ const insertGrades = (num) => {
     query += tmpQuery
   }
 
-  console.log(query)
   executeQuery(query)
+  console.log("Valutazioni seeded!! \n")
 }
 
 (async() => {
-  await insertClasses(5)
-  await insertStudents(7)
-  await insertSubjects()
-  await instertProfs(5)
-  await instertInsegnamenti(8)
-  await insertGrades(2)
+  try {
+    await createConnection(process.argv)
+    truncateTables()
+    createTables()
+    insertClasses(5)
+    insertStudents(7)
+    insertSubjects()
+    insertProfs(5)
+    insertInsegnamenti(8)
+    insertGrades(2)
+    process.exit(0)
+  } catch (err) {
+    console.error(err)
+  }
 })()
