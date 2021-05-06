@@ -8,17 +8,22 @@ const subjects = ["ENG", "ITA", "LAT", "FIL", "STO"]
 const insegnamenti = {}
 const surname_class = {}
 
+const allQueries = []
+const { writeFileSync } = require("fs-extra")
+
 const insertClasses = (num) => {
-  let query = "INSERT INTO Classi VALUES "
+  let query = "INSERT INTO Classi VALUES"
   let letter = "A"
   for (let i = 1; i <= num; i++) {
-    const tmp =  `${i <= 5 ? i : i - (Math.trunc(i / 5) * 5) }${letter}`
+    const tmp = `${i <= 5 ? i : i - (Math.trunc(i / 5) * 5)}${letter}`
     query += `("${tmp}"), `
     classes.push(tmp)
     if (i > 5) {
       letter = String.fromCharCode(letter.charCodeAt() + 1)
     }
   }
+
+  allQueries.push(query)
   executeQuery(query)
   console.log("Classi seeded!! \n")
 }
@@ -44,6 +49,7 @@ const insertStudents = (num) => {
   },
   "INSERT INTO Studenti VALUES")
 
+  allQueries.push(query)
   executeQuery(query)
   console.log("Studenti seeded!! \n")
 }
@@ -58,6 +64,7 @@ const insertSubjects = () => {
             ("FIL", "Filosofia"),
             ("STO", "Storia");`
 
+  allQueries.push(query)
   executeQuery(query)
   console.log("Materie seeded!! \n")
 }
@@ -74,6 +81,7 @@ const insertProfs = (num) => {
 
   const query = profs.reduce((acc, name) => acc += `(${name}, DEFAULT), `, "INSERT INTO Docenti VALUES")
 
+  allQueries.push(query)
   executeQuery(query)
   console.log("Docenti seeded!! \n")
 }
@@ -93,6 +101,7 @@ const insertInsegnamenti = (num) => {
     }
   }
 
+  allQueries.push(query)
   executeQuery(query)
   console.log("Insegnamenti seeded!! \n")
 
@@ -116,6 +125,7 @@ const insertGrades = (num) => {
     query += tmpQuery
   }
 
+  allQueries.push(query)
   executeQuery(query)
   console.log("Valutazioni seeded!! \n")
 }
@@ -123,14 +133,22 @@ const insertGrades = (num) => {
 (async() => {
   try {
     await createConnection(process.argv)
+
+    // Refresh DB
     truncateTables()
     createTables()
+
+    // Insert Data
     insertClasses(5)
     insertStudents(7)
     insertSubjects()
     insertProfs(5)
     insertInsegnamenti(8)
     insertGrades(2)
+
+    // Write queries to file
+    writeFileSync("./queries.sql", allQueries.join("\n"))
+
     process.exit(0)
   } catch (err) {
     console.error(err)
